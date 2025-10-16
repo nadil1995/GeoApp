@@ -2,46 +2,43 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'eu-west-2'
-        ECR_REPO = '058264525621.dkr.ecr.eu-west-2.amazonaws.com/country-access-app'
-        IMAGE_TAG = "latest"
+        DEPLOY_SERVER = 'ubuntu@13.40.154.215'
+        DEPLOY_PATH = '/var/www/country-access-app'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/<your-repo>.git'
+                git branch: 'main', url: 'https://github.com/nadil1995/GeoApp.git'
             }
         }
 
-        stage('Login to ECR') {
+        stage('Install Dependencies') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
-                    sh '''
-                        aws ecr get-login-password --region $AWS_REGION | \
-                        docker login --username AWS --password-stdin $ECR_REPO
-                    '''
-                }
+                sh 'npm install'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build React App') {
             steps {
-                sh 'docker build -t country-access-app:$IMAGE_TAG .'
-                sh 'docker tag country-access-app:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG'
+                sh 'npm run build'
             }
         }
 
-        stage('Push to ECR') {
+        stage('Deploy to Server') {
             steps {
-                sh 'docker push $ECR_REPO:$IMAGE_TAG'
+                // Copy build folder to your server
+                sh '''
+                ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "mkdir -p $DEPLOY_PATH"
+                rsync -avz --delete build/ $DEPLOY_SERVER:$DEPLOY_PATH/
+                '''
             }
         }
     }
 
     post {
         success {
-            echo 'Docker image successfully built and pushed to ECR!'
+            echo 'React app built and deployed successfully!'
         }
         failure {
             echo 'Pipeline failed!'
