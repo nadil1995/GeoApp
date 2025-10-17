@@ -25,14 +25,15 @@ pipeline {
             }
         }
 
-        stage('Deploy to Server') {
+     stage('Deploy to Server') {
             steps {
-                // Copy build folder to your server
-                sshagent(['server-ssh-key']) {
-                sh 'ssh -o StrictHostKeyChecking=no ubuntu@13.40.154.215 "mkdir -p /var/www/country-access-app"'
-                sh 'rsync -avz --delete build/ ubuntu@13.40.154.215:/var/www/country-access-app/'
-            }
-
+                sshagent(credentials: [env.SSH_CRED]) {
+                    sh '''
+                    ssh -o StrictHostKeyChecking=no ubuntu@${DEPLOY_SERVER} "mkdir -p ${DEPLOY_DIR}"
+                    scp -o StrictHostKeyChecking=no -r dist/* ubuntu@${DEPLOY_SERVER}:${DEPLOY_DIR}/
+                    ssh -o StrictHostKeyChecking=no ubuntu@${DEPLOY_SERVER} "sudo systemctl restart nginx || echo 'Nginx not configured yet'"
+                    '''
+                }
             }
         }
     }
