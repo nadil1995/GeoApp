@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_SERVER = 'ubuntu@13.40.154.215'
-        DEPLOY_PATH = '/var/www/country-access-app'
+        DEPLOY_SERVER = "13.40.154.215"
+        DEPLOY_DIR = "/var/www/country-access-app"
+        SSH_CRED = "geo-ssh"
     }
 
     stages {
@@ -25,7 +26,7 @@ pipeline {
             }
         }
 
-     stage('Deploy to Server') {
+        stage('Deploy to Server') {
             steps {
                 sshagent(credentials: [env.SSH_CRED]) {
                     sh '''
@@ -40,10 +41,10 @@ pipeline {
 
     post {
         success {
-            echo 'React app built and deployed successfully!'
+            echo "✅ Deployment completed successfully!"
         }
         failure {
-            echo 'Pipeline failed!'
+            echo "❌ Pipeline failed!"
         }
     }
 }
