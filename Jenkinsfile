@@ -28,10 +28,11 @@ pipeline {
         stage('Deploy to Server') {
             steps {
                 // Copy build folder to your server
-                sh '''
-                ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "mkdir -p $DEPLOY_PATH"
-                rsync -avz --delete build/ $DEPLOY_SERVER:$DEPLOY_PATH/
-                '''
+                sshagent(['server-ssh-key']) {
+                sh 'ssh -o StrictHostKeyChecking=no ubuntu@13.40.154.215 "mkdir -p /var/www/country-access-app"'
+                sh 'rsync -avz --delete build/ ubuntu@13.40.154.215:/var/www/country-access-app/'
+            }
+
             }
         }
     }
