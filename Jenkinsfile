@@ -26,19 +26,17 @@ pipeline {
             }
         }
 
-stage('Deploy to Server') {
-    steps {
-        sshagent(['server-ssh-key']) {
-            sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@13.40.154.215 "mkdir -p /var/www/country-access-app"
-                scp -o StrictHostKeyChecking=no -r dist/* ubuntu@13.40.154.215:/var/www/country-access-app/
-                ssh -o StrictHostKeyChecking=no ubuntu@13.40.154.215 "sudo systemctl restart nginx || echo 'Nginx not configured yet'"
-            '''
+        stage('Deploy to EC2') {
+            steps {
+                sshagent([env.SSH_CRED]) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ubuntu@${DEPLOY_SERVER} "sudo mkdir -p ${DEPLOY_DIR}"
+                        scp -o StrictHostKeyChecking=no -r dist/* ubuntu@${DEPLOY_SERVER}:${DEPLOY_DIR}/
+                        ssh -o StrictHostKeyChecking=no ubuntu@${DEPLOY_SERVER} "sudo systemctl restart nginx || echo 'Nginx not configured yet'"
+                    '''
+                }
+            }
         }
-    }
-}
-
-
     }
 
     post {
