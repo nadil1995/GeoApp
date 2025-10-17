@@ -28,7 +28,7 @@ pipeline {
 
 stage('Deploy to Server') {
     steps {
-        sshagent(['geo-ssh']) {
+        sshagent(['server-ssh-key']) {
             sh '''
                 ssh -o StrictHostKeyChecking=no ubuntu@13.40.154.215 "mkdir -p /var/www/country-access-app"
                 scp -o StrictHostKeyChecking=no -r dist/* ubuntu@13.40.154.215:/var/www/country-access-app/
