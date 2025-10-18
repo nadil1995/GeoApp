@@ -17,9 +17,9 @@ function App() {
         <Link to="/in">India</Link>
       </nav>
       <Routes>
-        <Route path="/uk" element={<CountryPage name="uk" />} />
-        <Route path="/us" element={<CountryPage name="us" />} />
-        <Route path="/in" element={<CountryPage name="in" />} />
+        <Route path="/uk" element={<CountryPage name="UK" />} />
+        <Route path="/us" element={<CountryPage name="USA" />} />
+        <Route path="/in" element={<CountryPage name="INDIA" />} />
         <Route path="*" element={<div style={{ textAlign: "center" }}>404 Not Found</div>} />
       </Routes>
     </Router>
