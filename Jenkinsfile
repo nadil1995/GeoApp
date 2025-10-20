@@ -38,7 +38,8 @@ pipeline {
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
                         echo "🚀 Building Docker image..."
-                        export DOCKER_BUILDKIT=1
+                        # Disable BuildKit to avoid missing buildx error
+                        export DOCKER_BUILDKIT=0
                         docker build -t $DOCKER_IMAGE .
 
                         echo "📦 Pushing image to Docker Hub..."
