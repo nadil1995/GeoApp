@@ -65,7 +65,7 @@ pipeline {
                     sudo docker pull $DOCKER_IMAGE &&
 
                     echo '🚀 Starting new container...' &&
-                    sudo docker run -d -p 80:80 --name geoapp $DOCKER_IMAGE
+                    sudo docker run -d -p 8081:80 --name geoapp $DOCKER_IMAGE
                 "
             '''
                 }
