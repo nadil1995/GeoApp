@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "nadil95/geoapp:latest"   // your Docker Hub repo
         EC2_HOST = "13.40.154.215"
-        SSH_CREDENTIALS = "ubuntu"               // Jenkins SSH key ID for EC2
+        SSH_CREDENTIALS = "geo-ssh"               // Jenkins SSH key ID for EC2
     }
 
     stages {
