@@ -55,14 +55,19 @@ pipeline {
             steps {
                 sshagent([SSH_CREDENTIALS]) {
                     sh '''
-                        echo "🚀 Deploying container on EC2..."
-                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST "
-                            sudo docker pull $DOCKER_IMAGE &&
-                            sudo docker stop geoapp || true &&
-                            sudo docker rm geoapp || true &&
-                            sudo docker run -d -p 80:80 --name geoapp $DOCKER_IMAGE
-                        "
-                    '''
+                echo "🚀 Deploying container on EC2..."
+                ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST "
+                    echo '🧹 Cleaning up old containers on port 80...' &&
+                    sudo docker ps -q --filter 'publish=80' | xargs -r sudo docker stop &&
+                    sudo docker ps -a -q --filter 'publish=80' | xargs -r sudo docker rm &&
+                    
+                    echo '📦 Pulling latest image...' &&
+                    sudo docker pull $DOCKER_IMAGE &&
+                    
+                    echo '🚀 Starting new container...' &&
+                    sudo docker run -d -p 80:80 --name geoapp $DOCKER_IMAGE
+                "
+            '''
                 }
             }
         }
