@@ -2,10 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        DOCKER_IMAGE = "nadil95/geoapp:latest"   // Change to your Docker Hub repo
+        DOCKER_IMAGE = "nadil95/geoapp:latest"   // your Docker Hub repo
         EC2_HOST = "13.40.154.215"
-        SSH_CREDENTIALS = "ubuntu"
+        SSH_CREDENTIALS = "ubuntu"               // Jenkins SSH key ID for EC2
     }
 
     stages {
@@ -27,18 +26,27 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build & Push Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
-            }
-        }
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        echo "🔑 Logging in to Docker Hub..."
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-        stage('Push to Docker Hub') {
-            steps {
-                sh '''
-                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                    docker push $DOCKER_IMAGE
-                '''
+                        echo "🚀 Building Docker image..."
+                        export DOCKER_BUILDKIT=1
+                        docker build -t $DOCKER_IMAGE .
+
+                        echo "📦 Pushing image to Docker Hub..."
+                        docker push $DOCKER_IMAGE
+
+                        docker logout
+                    '''
+                }
             }
         }
 
@@ -46,6 +54,7 @@ pipeline {
             steps {
                 sshagent([SSH_CREDENTIALS]) {
                     sh '''
+                        echo "🚀 Deploying container on EC2..."
                         ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST "
                             sudo docker pull $DOCKER_IMAGE &&
                             sudo docker stop geoapp || true &&
