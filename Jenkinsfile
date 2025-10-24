@@ -26,6 +26,15 @@ pipeline {
             }
         }
 
+        stage('Upload Build to S3') {
+    steps {
+        sh '''
+        aws s3 sync dist/ s3://geoapp-build-artifacts/Artifacts/ --delete
+        '''
+    }
+}
+
+
         stage('Build & Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(
