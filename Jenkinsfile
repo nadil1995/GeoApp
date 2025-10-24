@@ -26,34 +26,28 @@ pipeline {
             }
         }
 stage('Upload Build to S3') {
-    steps {
-        sh '''
-            echo "🔧 Checking for AWS CLI..."
+  steps {
+    sh '''
+      echo "🔧 Checking for AWS CLI..."
+      rm -rf aws awscliv2.zip aws-cli bin
 
-            rm -rf aws awscliv2.zip aws-cli bin
+      echo "📦 Downloading AWS CLI..."
+      curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
 
-            echo "📦 Downloading AWS CLI..."
-            curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      echo "📂 Extracting..."
+      python3 -m zipfile -e awscliv2.zip aws
 
-            echo "📂 Extracting using Python (no unzip needed)..."
-            python3 - <<'EOF'
-import zipfile
-with zipfile.ZipFile("awscliv2.zip", 'r') as zip_ref:
-    zip_ref.extractall(".")
-EOF
+      echo "⚙️ Installing AWS CLI locally..."
+      chmod +x "./aws/install"
+      "./aws/install" --bin-dir "./bin" --install-dir "./aws-cli" --update
 
-            echo "⚙️ Setting permissions and installing AWS CLI locally..."
-            chmod +x ./aws/install
-            ./aws/install --bin-dir ./bin --install-dir ./aws-cli --update
-
-            export PATH=$PATH:./bin
-            echo "✅ AWS CLI ready — syncing build artifacts..."
-            ./bin/aws --version
-
-            ./bin/aws s3 sync dist/ s3://geoapp-build-artifacts/Artifacts/ --delete
-        '''
-    }
+      export PATH="$PATH:$(pwd)/bin"
+      echo "✅ AWS CLI ready — syncing build artifacts..."
+      ./bin/aws --version
+    '''
+  }
 }
+
 
 
         stage('Build & Push Docker Image') {
