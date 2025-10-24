@@ -42,10 +42,11 @@ with zipfile.ZipFile("awscliv2.zip", 'r') as zip_ref:
     zip_ref.extractall(".")
 EOF
 
-            echo "⚙️ Installing AWS CLI locally..."
+            echo "⚙️ Setting permissions and installing AWS CLI locally..."
+            chmod +x ./aws/install
             ./aws/install --bin-dir ./bin --install-dir ./aws-cli --update
-            export PATH=$PATH:./bin
 
+            export PATH=$PATH:./bin
             echo "✅ AWS CLI ready — syncing build artifacts..."
             ./bin/aws --version
 
@@ -53,7 +54,6 @@ EOF
         '''
     }
 }
-
 
 
         stage('Build & Push Docker Image') {
