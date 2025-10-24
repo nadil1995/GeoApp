@@ -29,30 +29,35 @@ pipeline {
 stage('Upload Build to S3') {
     steps {
         sh '''
-            echo "🔧 Checking AWS CLI and unzip availability..."
+            echo "🔧 Checking for AWS CLI..."
 
-            # Install unzip locally if not present
-            if ! command -v unzip &> /dev/null; then
-                echo "📦 unzip not found — installing locally..."
-                apt-get update -y || true
-                apt-get install -y unzip || true
-            fi
+            # Clean up any old files
+            rm -rf awscliv2.zip aws aws-cli bin
 
-            # Install AWS CLI locally if not present
+            # If AWS CLI is not installed, install it locally (no sudo)
             if ! command -v aws &> /dev/null; then
-                echo "🔧 Installing AWS CLI locally..."
+                echo "📦 Installing AWS CLI locally (no sudo)..."
                 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-                unzip awscliv2.zip
+
+                # Download and use a static unzip binary if 'unzip' is missing
+                if ! command -v unzip &> /dev/null; then
+                    echo "📦 unzip not found — downloading standalone binary..."
+                    curl -L "https://github.com/nabinnoor/linux-utils/releases/download/v1.0/unzip" -o unzip
+                    chmod +x unzip
+                    ./unzip awscliv2.zip
+                else
+                    unzip awscliv2.zip
+                fi
+
                 ./aws/install --bin-dir ./bin --install-dir ./aws-cli --update
                 export PATH=$PATH:./bin
             fi
 
-            echo "📤 Uploading build artifacts to S3..."
+            echo "✅ AWS CLI ready — syncing build artifacts..."
             ./bin/aws s3 sync dist/ s3://geoapp-build-artifacts/Artifacts/ --delete
         '''
     }
 }
-
 
 
 
