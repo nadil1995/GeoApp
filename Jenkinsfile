@@ -26,11 +26,11 @@ pipeline {
             }
         }
 
-   stage('Upload Build to S3') {
+  stage('Upload Build to S3') {
     steps {
         sh '''
             if ! command -v aws &> /dev/null; then
-                echo "Installing AWS CLI..."
+                echo "🔧 Installing AWS CLI..."
                 sudo apt-get update -y
                 sudo apt-get install -y awscli
             fi
@@ -40,6 +40,7 @@ pipeline {
         '''
     }
 }
+
 
 
         stage('Build & Push Docker Image') {
