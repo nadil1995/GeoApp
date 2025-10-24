@@ -29,6 +29,16 @@ pipeline {
 stage('Upload Build to S3') {
     steps {
         sh '''
+            echo "🔧 Checking AWS CLI and unzip availability..."
+
+            # Install unzip locally if not present
+            if ! command -v unzip &> /dev/null; then
+                echo "📦 unzip not found — installing locally..."
+                apt-get update -y || true
+                apt-get install -y unzip || true
+            fi
+
+            # Install AWS CLI locally if not present
             if ! command -v aws &> /dev/null; then
                 echo "🔧 Installing AWS CLI locally..."
                 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -42,6 +52,7 @@ stage('Upload Build to S3') {
         '''
     }
 }
+
 
 
 
