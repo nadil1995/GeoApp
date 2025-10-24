@@ -30,23 +30,19 @@ stage('Upload Build to S3') {
         sh '''
             echo "🔧 Checking for AWS CLI..."
 
-            rm -rf aws awscliv2.zip aws-cli bin busybox
+            rm -rf aws awscliv2.zip aws-cli bin
 
-            # Download AWS CLI installer
             echo "📦 Downloading AWS CLI..."
             curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 
-            # Use busybox as unzip fallback (no sudo needed)
-            if ! command -v unzip &> /dev/null; then
-                echo "📦 unzip not found — downloading busybox as fallback..."
-                curl -L "https://busybox.net/downloads/binaries/1.35.0-defconfig-multiarch/busybox-x86_64" -o busybox
-                chmod +x busybox
-                ./busybox unzip awscliv2.zip
-            else
-                unzip awscliv2.zip
-            fi
+            echo "📂 Extracting using Python (no unzip needed)..."
+            python3 - <<'EOF'
+import zipfile
+with zipfile.ZipFile("awscliv2.zip", 'r') as zip_ref:
+    zip_ref.extractall(".")
+EOF
 
-            # Install AWS CLI locally
+            echo "⚙️ Installing AWS CLI locally..."
             ./aws/install --bin-dir ./bin --install-dir ./aws-cli --update
             export PATH=$PATH:./bin
 
