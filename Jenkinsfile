@@ -25,40 +25,38 @@ pipeline {
                 sh 'npm run build'
             }
         }
-
 stage('Upload Build to S3') {
     steps {
         sh '''
             echo "🔧 Checking for AWS CLI..."
 
-            # Clean up any old files
-            rm -rf awscliv2.zip aws aws-cli bin
+            rm -rf aws awscliv2.zip aws-cli bin busybox
 
-            # If AWS CLI is not installed, install it locally (no sudo)
-            if ! command -v aws &> /dev/null; then
-                echo "📦 Installing AWS CLI locally (no sudo)..."
-                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            # Download AWS CLI installer
+            echo "📦 Downloading AWS CLI..."
+            curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 
-                # Download and use a static unzip binary if 'unzip' is missing
-                if ! command -v unzip &> /dev/null; then
-                    echo "📦 unzip not found — downloading standalone binary..."
-                    curl -L "https://github.com/nabinnoor/linux-utils/releases/download/v1.0/unzip" -o unzip
-                    chmod +x unzip
-                    ./unzip awscliv2.zip
-                else
-                    unzip awscliv2.zip
-                fi
-
-                ./aws/install --bin-dir ./bin --install-dir ./aws-cli --update
-                export PATH=$PATH:./bin
+            # Use busybox as unzip fallback (no sudo needed)
+            if ! command -v unzip &> /dev/null; then
+                echo "📦 unzip not found — downloading busybox as fallback..."
+                curl -L "https://busybox.net/downloads/binaries/1.35.0-defconfig-multiarch/busybox-x86_64" -o busybox
+                chmod +x busybox
+                ./busybox unzip awscliv2.zip
+            else
+                unzip awscliv2.zip
             fi
 
+            # Install AWS CLI locally
+            ./aws/install --bin-dir ./bin --install-dir ./aws-cli --update
+            export PATH=$PATH:./bin
+
             echo "✅ AWS CLI ready — syncing build artifacts..."
+            ./bin/aws --version
+
             ./bin/aws s3 sync dist/ s3://geoapp-build-artifacts/Artifacts/ --delete
         '''
     }
 }
-
 
 
 
