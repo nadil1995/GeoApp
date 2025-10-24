@@ -26,10 +26,17 @@ pipeline {
             }
         }
 
-        stage('Upload Build to S3') {
+   stage('Upload Build to S3') {
     steps {
         sh '''
-        aws s3 sync dist/ s3://geoapp-build-artifacts/Artifacts/ --delete
+            if ! command -v aws &> /dev/null; then
+                echo "Installing AWS CLI..."
+                sudo apt-get update -y
+                sudo apt-get install -y awscli
+            fi
+
+            echo "📤 Uploading build artifacts to S3..."
+            aws s3 sync dist/ s3://geoapp-build-artifacts/Artifacts/ --delete
         '''
     }
 }
