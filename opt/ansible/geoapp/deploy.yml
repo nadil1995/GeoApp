@@ -1,0 +1,19 @@
+---
+- hosts: geo_servers
+  become: yes
+  tasks:
+    - name: Install dependencies
+      apt:
+        name: [docker.io, nginx]
+        state: present
+        update_cache: yes
+
+    - name: Pull latest Docker image
+      command: docker pull nadil95/geoapp:latest
+
+    - name: Stop and remove existing container
+      command: docker rm -f geoapp
+      ignore_errors: yes
+
+    - name: Run new container
+      command: docker run -d -p 8081:80 --name geoapp nadil95/geoapp:latest
