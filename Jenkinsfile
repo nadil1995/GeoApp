@@ -27,24 +27,24 @@ pipeline {
         }
 stage('Upload Build to S3') {
   steps {
-    sh '''
-      echo "🔧 Checking for AWS CLI..."
-      rm -rf aws awscliv2.zip aws-cli bin
+         sh '''
+                echo "🚀 Deploying container on EC2..."
+                ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST "
+                    echo '🧹 Cleaning up old containers on port 80...' &&
+                    sudo docker ps -q --filter 'publish=80' | xargs -r sudo docker stop &&
+                    sudo docker ps -a -q --filter 'publish=80' | xargs -r sudo docker rm &&
+                    
+                    echo '🧹 Stopping and removing old container if exists...' &&
+                    sudo docker stop geoapp || true &&
+                    sudo docker rm geoapp || true &&
 
-      echo "📦 Downloading AWS CLI..."
-      curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+                    echo '📦 Pulling latest image...' &&
+                    sudo docker pull $DOCKER_IMAGE &&
+                    
 
-      echo "📂 Extracting..."
-      python3 -m zipfile -e awscliv2.zip aws
-
-      echo "⚙️ Installing AWS CLI locally..."
-      chmod +x "./aws/install"
-      "./aws/install" --bin-dir "./bin" --install-dir "./aws-cli" --update
-
-      export PATH="$PATH:$(pwd)/bin"
-      echo "✅ AWS CLI ready — syncing build artifacts..."
-      ./bin/aws --version
-    '''
+                    echo '🚀 Starting new container...' &&
+                    sudo docker run -d -p 80:80 --name geoapp $DOCKER_IMAGE
+                "
   }
 }
 
