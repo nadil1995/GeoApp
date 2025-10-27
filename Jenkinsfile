@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "nadil95/geoapp:latest"   // your Docker Hub repo
+        DOCKER_IMAGE = "nadil95/geoapp:latest"
         EC2_HOST = "13.40.154.215"
-        SSH_CREDENTIALS = "geo-ssh"               // Jenkins SSH key ID for EC2
+        SSH_CREDENTIALS = "geo-ssh"
     }
 
     stages {
@@ -25,30 +25,6 @@ pipeline {
                 sh 'npm run build'
             }
         }
-stage('Upload Build to S3') {
-  steps {
-         sh '''
-                echo "🚀 Deploying container on EC2..."
-                ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST "
-                    echo '🧹 Cleaning up old containers on port 80...' &&
-                    sudo docker ps -q --filter 'publish=80' | xargs -r sudo docker stop &&
-                    sudo docker ps -a -q --filter 'publish=80' | xargs -r sudo docker rm &&
-                    
-                    echo '🧹 Stopping and removing old container if exists...' &&
-                    sudo docker stop geoapp || true &&
-                    sudo docker rm geoapp || true &&
-
-                    echo '📦 Pulling latest image...' &&
-                    sudo docker pull $DOCKER_IMAGE &&
-                    
-
-                    echo '🚀 Starting new container...' &&
-                    sudo docker run -d -p 80:80 --name geoapp $DOCKER_IMAGE
-                "
-  }
-}
-
-
 
         stage('Build & Push Docker Image') {
             steps {
@@ -75,23 +51,23 @@ stage('Upload Build to S3') {
             }
         }
 
-        stage('Deploy from Docker Hub to EC2') {
+        stage('Deploy Build to EC2') {
             steps {
                 sshagent([SSH_CREDENTIALS]) {
                     sh '''
-                echo "🚀 Deploying container on EC2..."
-                ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST "
-                    echo '🧹 Stopping and removing old container if exists...' &&
-                    sudo docker stop geoapp || true &&
-                    sudo docker rm geoapp || true &&
+                        echo "🚀 Deploying container on EC2..."
+                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST "
+                            echo '🧹 Stopping and removing old container if exists...' &&
+                            sudo docker stop geoapp || true &&
+                            sudo docker rm geoapp || true &&
 
-                    echo '📦 Pulling latest image...' &&
-                    sudo docker pull $DOCKER_IMAGE &&
+                            echo '📦 Pulling latest image...' &&
+                            sudo docker pull $DOCKER_IMAGE &&
 
-                    echo '🚀 Starting new container...' &&
-                    sudo docker run -d -p 8081:80 --name geoapp $DOCKER_IMAGE
-                "
-            '''
+                            echo '🚀 Starting new container...' &&
+                            sudo docker run -d -p 8081:80 --name geoapp $DOCKER_IMAGE
+                        "
+                    '''
                 }
             }
         }
